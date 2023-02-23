@@ -1288,9 +1288,11 @@ func (s *InstanceModeSuite) TestRemoteRelationIngressFallbackToPublic(c *gc.C) {
 }
 
 func (s *InstanceModeSuite) TestRemoteRelationIngressFallbackToWhitelist(c *gc.C) {
-	fwRules := state.NewFirewallRules(s.State)
-	err := fwRules.Save(state.NewFirewallRule(firewall.JujuApplicationOfferRule, []string{"192.168.1.0/16"}))
+	m, err := s.State.Model()
 	c.Assert(err, jc.ErrorIsNil)
+	m.UpdateModelConfig(map[string]interface{}{
+		config.ApplicationOfferIngressAllowListKey: "192.168.1.0/16",
+	}, nil)
 	var ingress []string
 	for i := 1; i < 30; i++ {
 		ingress = append(ingress, fmt.Sprintf("10.%d.0.1/32", i))
