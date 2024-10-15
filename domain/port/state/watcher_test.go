@@ -7,7 +7,6 @@ import (
 	"context"
 
 	"github.com/canonical/sqlair"
-	"github.com/juju/collections/set"
 	jc "github.com/juju/testing/checkers"
 	gc "gopkg.in/check.v1"
 
@@ -123,18 +122,26 @@ func (s *watcherSuite) TestGetMachinesForEndpoints(c *gc.C) {
 	machineUUIDsForEndpoint, err = st.GetMachineNamesForEndpoints(ctx, []string{endpointToUUIDMap["ep0"]})
 	c.Assert(err, jc.ErrorIsNil)
 	c.Check(machineUUIDsForEndpoint, jc.DeepEquals, []machine.Name{"0"})
+
+	machineUUIDsForEndpoint, err = st.GetMachineNamesForEndpoints(ctx, []string{endpointToUUIDMap["ep0"], endpointToUUIDMap["ep1"]})
+	c.Assert(err, jc.ErrorIsNil)
+	c.Check(machineUUIDsForEndpoint, jc.DeepEquals, []machine.Name{"0"})
 }
 
-func (s *watcherSuite) TestFilterEndpointForApplication(c *gc.C) {
+func (s *watcherSuite) TestGetApplicationForEndpoints(c *gc.C) {
 	st := NewState(s.TxnRunnerFactory())
 	ctx := context.Background()
 	endpointUUIDs, endpointToUUIDMap := s.initialiseOpenPorts(c, st)
 
-	filteredEndpointUUIDs, err := st.FilterEndpointsForApplication(ctx, s.appUUIDs[0], endpointUUIDs)
+	appNamesForEndpoint, err := st.GetApplicationNamesForEndpoints(ctx, endpointUUIDs)
 	c.Assert(err, jc.ErrorIsNil)
-	c.Check(filteredEndpointUUIDs, jc.DeepEquals, set.NewStrings(endpointToUUIDMap["ep0"]))
+	c.Check(appNamesForEndpoint, jc.SameContents, []string{appNames[0], appNames[1]})
 
-	filteredEndpointUUIDs, err = st.FilterEndpointsForApplication(ctx, s.appUUIDs[1], endpointUUIDs)
+	appNamesForEndpoint, err = st.GetApplicationNamesForEndpoints(ctx, []string{endpointToUUIDMap["ep0"]})
 	c.Assert(err, jc.ErrorIsNil)
-	c.Check(filteredEndpointUUIDs, jc.DeepEquals, set.NewStrings(endpointToUUIDMap["ep1"], endpointToUUIDMap["ep2"]))
+	c.Check(appNamesForEndpoint, jc.SameContents, []string{appNames[0]})
+
+	appNamesForEndpoint, err = st.GetApplicationNamesForEndpoints(ctx, []string{endpointToUUIDMap["ep1"], endpointToUUIDMap["ep2"]})
+	c.Assert(err, jc.ErrorIsNil)
+	c.Check(appNamesForEndpoint, jc.SameContents, []string{appNames[1]})
 }
